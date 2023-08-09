@@ -1,0 +1,104 @@
+name: 'GitHub Action Atmos Terraform Drift Remediation'
+description: 'GitHub Action Atmos Terraform Drift Remediation'
+author: hello@cloudposse.com
+branding:
+  icon: 'server'
+  color: 'white'
+inputs:
+  issue-number:
+    description: "Issue Number"
+    required: true
+  terraform-plan-role:
+    description: "The AWS role to be used to plan Terraform."
+    required: true
+  terraform-state-role:
+    description: "The AWS role to be used to retrieve the planfile from AWS."
+    required: true
+  terraform-state-bucket:
+    description: "The S3 Bucket where the planfiles are stored."
+    required: true
+  terraform-state-table:
+    description: "The DynamoDB table where planfile metadata is stored."
+    required: true
+  aws-region:
+    description: "AWS region for assuming identity."
+    required: false
+    default: "us-east-1"
+  atmos-version:
+    description: "Atmos version to use for vendoring. Default 'latest'"
+    required: false
+    default: 'latest'
+  atmos-config-path:
+    description: The path to the folder where atmos.yaml file is located
+    required: false
+    default: '.'
+  terraform-version:
+    description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
+    default: 'latest'
+    required: false
+  debug:
+    description: "Enable action debug mode. Default: 'false'"
+    default: 'false'
+    required: false
+  token:
+    description:
+      Used to pull node distributions for Atmos from Cloud Posse's GitHub repository. Since there's a default, this is typically
+      not supplied by the user. When running this action on github.com, the default value is sufficient. When running on
+      GHES, you can pass a personal access token for github.com if you are experiencing rate limiting.
+    default: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get Issue Metadata
+      id: metadata
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+            try {
+              const owner = "${{ github.repository_owner }}";
+              const repo = "${{ github.event.repository.name }}";
+              const issue = await github.rest.issues.get({
+                owner: owner,
+                repo: repo,
+                issue_number: ${{ inputs.issue-number }},
+              });
+              const description = issue.data.body;
+              const regex = /{"component":\s*"([^"]*)",\s*"stack":\s*"([^"]*)",\s*"componentPath":\s*"([^"]*)",\s*"planFile":\s*"([^"]*)"}/;
+              const match = regex.exec(description);
+
+              if (match) {
+                const component = match[1];
+                const stack = match[2];
+                const componentPath = match[3];
+                const planFile = match[4];
+
+                core.setOutput('component', component);
+                core.setOutput('stack', stack);
+                core.setOutput('component-path', componentPath);
+                core.setOutput('plan-file', planFile);
+              } else {
+                core.setFailed("Invalid metadata in the issue description");
+              }
+            } catch (error) {
+              core.setFailed(error.message);
+            }
+
+    - name: Atmos Apply
+      id: atmos-apply
+      uses: cloudposse/github-action-atmos-terraform-apply@added-input-plan-file
+      with:
+        component: ${{steps.metadata.outputs.component}}
+        stack: ${{steps.metadata.outputs.stack}}
+        component-path: ${{steps.metadata.outputs.component-path}}
+        plan-file: ${{steps.metadata.outputs.plan-file}}
+        terraform-plan-role: ${{ inputs.terraform-plan-role }}
+        terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
+        terraform-state-role: ${{ inputs.terraform-state-role }}
+        terraform-state-table: ${{ inputs.terraform-state-table }}
+        aws-region: ${{ inputs.aws-region }}
+        token: ${{ inputs.token }}
+        atmos-version: ${{ inputs.atmos-version }}
+        terraform-version: ${{ inputs.terraform-version }}
+        debug: ${{ inputs.debug }}
