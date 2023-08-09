@@ -8,8 +8,12 @@ inputs:
   issue-number:
     description: "Issue Number"
     required: true
-  terraform-plan-role:
-    description: "The AWS role to be used to plan Terraform."
+  sha:
+    description: "Commit SHA that will be used as suffix for plan file"
+    required: true
+    default: ${{ github.ref }}
+  terraform-apply-role:
+    description: "The AWS role to be used to apply Terraform."
     required: true
   terraform-state-role:
     description: "The AWS role to be used to retrieve the planfile from AWS."
@@ -89,11 +93,11 @@ runs:
       id: atmos-apply
       uses: cloudposse/github-action-atmos-terraform-apply@added-input-plan-file
       with:
-        component: ${{steps.metadata.outputs.component}}
-        stack: ${{steps.metadata.outputs.stack}}
-        component-path: ${{steps.metadata.outputs.component-path}}
-        plan-file: ${{steps.metadata.outputs.plan-file}}
-        terraform-plan-role: ${{ inputs.terraform-plan-role }}
+        component: ${{ steps.metadata.outputs.component }}
+        stack: ${{ steps.metadata.outputs.stack }}
+        component-path: ${{ steps.metadata.outputs.component-path }}
+        sha: ${{ inputs.sha }}
+        terraform-apply-role: ${{ inputs.terraform-apply-role }}
         terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
         terraform-state-role: ${{ inputs.terraform-state-role }}
         terraform-state-table: ${{ inputs.terraform-state-table }}
