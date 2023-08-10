@@ -102,3 +102,18 @@ runs:
         atmos-version: ${{ inputs.atmos-version }}
         terraform-version: ${{ inputs.terraform-version }}
         debug: ${{ inputs.debug }}
+
+    - name: Post a comment
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const issue_number = ${{ inputs.issue-number }};
+          const repository = context.repo;
+          const apply_status = "${{ steps.atmos-apply.outputs.status }}";
+          const comment_body = (apply_status == 'succeeded') ? "Successfully applied component" : "Failed to apply component";
+
+          github.rest.issues.createComment({
+            ...repository,
+            issue_number: issue_number,
+            body: comment_body,
+          });
