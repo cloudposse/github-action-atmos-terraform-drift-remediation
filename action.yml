@@ -65,7 +65,7 @@ runs:
               issue_number: ${{ inputs.issue-number }},
             });
             const description = issue.data.body;
-            const regex = /{"component":\s*"([^"]*)",\s*"stack":\s*"([^"]*)",\s*"componentPath":\s*"([^"]*)",\s*"planFile":\s*"([^"]*)"}/;
+            const regex = /{"component":\s*"([^"]*)",\s*"stack":\s*"([^"]*)",\s*"componentPath":\s*"([^"]*)",\s*"planFile":\s*"([^"]*)",\s*"commitSHA":\s*"([^"]*)"}/;
             const match = regex.exec(description);
 
             if (match) {
@@ -73,11 +73,13 @@ runs:
               const stack = match[2];
               const componentPath = match[3];
               const planFile = match[4];
+              const commitSHA = match[5];
 
               core.setOutput('component', component);
               core.setOutput('stack', stack);
               core.setOutput('component-path', componentPath);
               core.setOutput('plan-file', planFile);
+              core.setOutput('sha', planFile);
             } else {
               core.setFailed("Invalid metadata in the issue description");
             }
@@ -93,6 +95,7 @@ runs:
         stack: ${{ steps.metadata.outputs.stack }}
         component-path: ${{ steps.metadata.outputs.component-path }}
         plan-file: ${{ steps.metadata.outputs.plan-file }}
+        sha: ${{ steps.metadata.outputs.sha }}
         terraform-apply-role: ${{ inputs.terraform-apply-role }}
         terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
         terraform-state-role: ${{ inputs.terraform-state-role }}
