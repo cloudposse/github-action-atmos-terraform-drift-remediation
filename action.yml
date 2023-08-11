@@ -106,6 +106,7 @@ runs:
     - name: Post a comment
       uses: actions/github-script@v6
       with:
+        github-token: ${{ inputs.token }}
         script: |
           const issue_number = ${{ inputs.issue-number }};
           const repository = context.repo;
