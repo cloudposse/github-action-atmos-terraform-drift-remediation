@@ -56,7 +56,7 @@ runs:
       with:
         github-token: ${{ inputs.token }}
         script: |
-          console.log(inputs.issue-number);
+          console.log(${{ inputs.issue-number }});
 
     # - name: Atmos Apply
     #   id: atmos-apply
