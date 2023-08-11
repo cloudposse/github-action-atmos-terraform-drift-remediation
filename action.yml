@@ -64,7 +64,9 @@ runs:
                 repo: repo,
                 issue_number: ${{ inputs.issue-number }},
               });
+              console.log(issue);
               const description = issue.data.body;
+              console.log(description);
               const regex = /{"component":\s*"([^"]*)",\s*"stack":\s*"([^"]*)",\s*"componentPath":\s*"([^"]*)",\s*"planFile":\s*"([^"]*)"}/;
               const match = regex.exec(description);
 
