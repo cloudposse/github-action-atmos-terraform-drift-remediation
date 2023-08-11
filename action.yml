@@ -94,7 +94,6 @@ runs:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
         component-path: ${{ steps.metadata.outputs.component-path }}
-        plan-file: ${{ steps.metadata.outputs.plan-file }}
         plan-id: ${{ steps.metadata.outputs.plan-id }}
         terraform-apply-role: ${{ inputs.terraform-apply-role }}
         terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
