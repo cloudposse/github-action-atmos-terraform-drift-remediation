@@ -114,7 +114,7 @@ runs:
           const issue_number = ${{ inputs.issue-number }};
           const repository = context.repo;
           const apply_status = "${{ steps.atmos-apply.outputs.status }}";
-          const comment_body = (apply_status == 'succeeded') ? "Successfully applied component" : "Failed to apply component";
+          const comment_body = "${{ steps.atmos-apply.outputs.summary }}";
 
           github.rest.issues.createComment({
             ...repository,
