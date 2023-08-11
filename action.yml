@@ -56,7 +56,11 @@ runs:
       with:
         github-token: ${{ inputs.token }}
         script: |
-          console.log(${{ inputs.issue-number }});
+          try {
+            const owner = "${{ github.repository_owner }}";
+            const repo = "${{ github.event.repository.name }}";
+            console.log(owner);
+            console.log(repo);
 
     # - name: Atmos Apply
     #   id: atmos-apply
