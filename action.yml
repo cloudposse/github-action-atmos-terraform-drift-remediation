@@ -59,8 +59,31 @@ runs:
           try {
             const owner = "${{ github.repository_owner }}";
             const repo = "${{ github.event.repository.name }}";
-            console.log(owner);
-            console.log(repo);
+            const issue = await github.rest.issues.get({
+              owner: owner,
+              repo: repo,
+              issue_number: ${{ inputs.issue-number }},
+            });
+            const description = issue.data.body;
+            const regex = /{"component":\s*"([^"]*)",\s*"stack":\s*"([^"]*)",\s*"componentPath":\s*"([^"]*)",\s*"planFile":\s*"([^"]*)"}/;
+            const match = regex.exec(description);
+
+            if (match) {
+              const component = match[1];
+              const stack = match[2];
+              const componentPath = match[3];
+              const planFile = match[4];
+
+              core.setOutput('component', component);
+              core.setOutput('stack', stack);
+              core.setOutput('component-path', componentPath);
+              core.setOutput('plan-file', planFile);
+            } else {
+              core.setFailed("Invalid metadata in the issue description");
+            }
+          } catch (error) {
+            core.setFailed(error.message);
+          }
 
     # - name: Atmos Apply
     #   id: atmos-apply
