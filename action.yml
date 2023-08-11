@@ -79,7 +79,7 @@ runs:
               core.setOutput('stack', stack);
               core.setOutput('component-path', componentPath);
               core.setOutput('plan-file', planFile);
-              core.setOutput('sha', planFile);
+              core.setOutput('sha', commitSHA);
             } else {
               core.setFailed("Invalid metadata in the issue description");
             }
