@@ -85,35 +85,35 @@ runs:
             core.setFailed(error.message);
           }
 
-    # - name: Atmos Apply
-    #   id: atmos-apply
-    #   uses: cloudposse/github-action-atmos-terraform-apply@added-input-plan-file
-    #   with:
-    #     component: ${{ steps.metadata.outputs.component }}
-    #     stack: ${{ steps.metadata.outputs.stack }}
-    #     component-path: ${{ steps.metadata.outputs.component-path }}
-    #     plan-file: ${{ steps.metadata.outputs.plan-file }}
-    #     terraform-apply-role: ${{ inputs.terraform-apply-role }}
-    #     terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
-    #     terraform-state-role: ${{ inputs.terraform-state-role }}
-    #     terraform-state-table: ${{ inputs.terraform-state-table }}
-    #     aws-region: ${{ inputs.aws-region }}
-    #     token: ${{ inputs.token }}
-    #     atmos-version: ${{ inputs.atmos-version }}
-    #     terraform-version: ${{ inputs.terraform-version }}
-    #     debug: ${{ inputs.debug }}
+    - name: Atmos Apply
+      id: atmos-apply
+      uses: cloudposse/github-action-atmos-terraform-apply@added-input-plan-file
+      with:
+        component: ${{ steps.metadata.outputs.component }}
+        stack: ${{ steps.metadata.outputs.stack }}
+        component-path: ${{ steps.metadata.outputs.component-path }}
+        plan-file: ${{ steps.metadata.outputs.plan-file }}
+        terraform-apply-role: ${{ inputs.terraform-apply-role }}
+        terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
+        terraform-state-role: ${{ inputs.terraform-state-role }}
+        terraform-state-table: ${{ inputs.terraform-state-table }}
+        aws-region: ${{ inputs.aws-region }}
+        token: ${{ inputs.token }}
+        atmos-version: ${{ inputs.atmos-version }}
+        terraform-version: ${{ inputs.terraform-version }}
+        debug: ${{ inputs.debug }}
 
-    # - name: Post a comment
-    #   uses: actions/github-script@v6
-    #   with:
-    #     script: |
-    #       const issue_number = ${{ inputs.issue-number }};
-    #       const repository = context.repo;
-    #       const apply_status = "${{ steps.atmos-apply.outputs.status }}";
-    #       const comment_body = (apply_status == 'succeeded') ? "Successfully applied component" : "Failed to apply component";
+    - name: Post a comment
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const issue_number = ${{ inputs.issue-number }};
+          const repository = context.repo;
+          const apply_status = "${{ steps.atmos-apply.outputs.status }}";
+          const comment_body = (apply_status == 'succeeded') ? "Successfully applied component" : "Failed to apply component";
 
-    #       github.rest.issues.createComment({
-    #         ...repository,
-    #         issue_number: issue_number,
-    #         body: comment_body,
-    #       });
+          github.rest.issues.createComment({
+            ...repository,
+            issue_number: issue_number,
+            body: comment_body,
+          });
