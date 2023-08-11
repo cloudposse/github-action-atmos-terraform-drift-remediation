@@ -116,7 +116,6 @@ runs:
           const issue_number = ${{ inputs.issue-number }};
           const repository = context.repo;
           const apply_status = "${{ steps.atmos-apply.outputs.status }}";
-          const comment_body = "${{ steps.atmos-apply.outputs.summary }}";
           const body = fs.readFileSync("${{ github.workspace }}/summary-${{ github.sha }}.md", 'utf8');
 
           github.rest.issues.createComment({
