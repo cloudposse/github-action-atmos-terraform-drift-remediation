@@ -105,20 +105,35 @@ runs:
         terraform-version: ${{ inputs.terraform-version }}
         debug: ${{ inputs.debug }}
 
-    - name: Post a comment
+    - name: Post Comment
       uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
         script: |
           const fs = require('fs');
 
-          const issue_number = ${{ inputs.issue-number }};
+          const issueNumber = ${{ inputs.issue-number }};
           const repository = context.repo;
           const apply_status = "${{ steps.atmos-apply.outputs.status }}";
           const body = fs.readFileSync("${{ github.workspace }}/summary-${{ github.sha }}.md", 'utf8');
 
           github.rest.issues.createComment({
             ...repository,
-            issue_number: issue_number,
+            issue_number: issueNumber,
             body: body,
+          });
+
+    - name: Close Issue
+      uses: actions/github-script@v6
+      if: ${{ steps.atmos-apply.outputs.status == 'succeeded' }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+
+          await github.rest.issues.update({
+            ...repository,
+            issue_number: issueNumber,
+            state: 'closed'
           });
