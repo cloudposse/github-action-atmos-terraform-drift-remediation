@@ -123,6 +123,23 @@ runs:
             body: body,
           });
 
+    - name: Add Label on Failure
+      uses: actions/github-script@v6
+      if: ${{ steps.atmos-apply.outputs.status != 'succeeded' }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+
+          const labelToAdd = 'failed';
+
+          await github.rest.issues.addLabels({
+            ...repository,
+            issue_number: issueNumber,
+            labels: [labelToAdd]
+          });          
+
     - name: Close Issue
       uses: actions/github-script@v6
       if: ${{ steps.atmos-apply.outputs.status == 'succeeded' }}
@@ -137,3 +154,17 @@ runs:
             issue_number: issueNumber,
             state: 'closed'
           });
+
+          try {
+            const labelToRemove = 'failed';
+
+            await github.rest.issues.removeLabel({
+              ...repository,
+              issue_number: issueNumber,
+              name: labelToRemove
+            });
+
+            console.log(`Label "${labelToRemove}" removed successfully.`);
+          } catch (error) {
+            console.log(`Label "${labelToRemove}" was not found on the issue.`);
+          }
