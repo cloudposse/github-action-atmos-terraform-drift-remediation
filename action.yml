@@ -138,9 +138,9 @@ runs:
             ...repository,
             issue_number: issueNumber,
             labels: [labelToAdd]
-          });          
+          });
 
-    - name: Close Issue
+    - name: Close Issue on Success
       uses: actions/github-script@v6
       if: ${{ steps.atmos-apply.outputs.status == 'succeeded' }}
       with:
@@ -155,9 +155,9 @@ runs:
             state: 'closed'
           });
 
-          try {
-            const labelToRemove = 'failed';
+          const labelToRemove = 'failed';
 
+          try {
             await github.rest.issues.removeLabel({
               ...repository,
               issue_number: issueNumber,
