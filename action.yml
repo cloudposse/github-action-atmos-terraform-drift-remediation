@@ -8,18 +8,21 @@ inputs:
   issue-number:
     description: "Issue Number"
     required: true
+  mode:
+    description: "Drift handling mode. One of ['remediate', 'discard']"
+    required: true
   terraform-apply-role:
-    description: "The AWS role to be used to apply Terraform."
-    required: true
+    description: "The AWS role to be used to apply Terraform. Required for mode 'remediate'."
+    required: false
   terraform-state-role:
-    description: "The AWS role to be used to retrieve the planfile from AWS."
-    required: true
+    description: "The AWS role to be used to retrieve the planfile from AWS. Required for mode 'remediate'."
+    required: false
   terraform-state-bucket:
-    description: "The S3 Bucket where the planfiles are stored."
-    required: true
+    description: "The S3 Bucket where the planfiles are stored. Required for mode 'remediate'."
+    required: false
   terraform-state-table:
-    description: "The DynamoDB table where planfile metadata is stored."
-    required: true
+    description: "The DynamoDB table where planfile metadata is stored. Required for mode 'remediate'."
+    required: false
   aws-region:
     description: "AWS region for assuming identity."
     required: false
@@ -50,7 +53,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Define Job Control State Variables
+      shell: bash
+      run: |
+        echo "HANDLING_MODE=${{ inputs.mode }}" >> $GITHUB_ENV
+        echo "APPLY_SUCCEEDED=false" >> $GITHUB_ENV
+
     - name: Get Issue Metadata
+      if: env.HANDLING_MODE == 'remediate'
       id: metadata
       uses: actions/github-script@v6
       with:
@@ -84,6 +94,7 @@ runs:
           }
 
     - name: Atmos Apply
+      if: env.HANDLING_MODE == 'remediate'
       id: atmos-apply
       uses: cloudposse/github-action-atmos-terraform-apply@drift-detection-approach-4
       with:
@@ -102,7 +113,17 @@ runs:
         terraform-version: ${{ inputs.terraform-version }}
         debug: ${{ inputs.debug }}
 
+    - name: Check If GitHub Actions is Enabled For Component
+      shell: bash
+      run: |
+        if [[ "${{ steps.atmos-apply.outputs.status != 'succeeded' }}" ]]; then
+          echo "APPLY_SUCCEEDED=true" >> $GITHUB_ENV
+        else
+          echo "APPLY_SUCCEEDED=false" >> $GITHUB_ENV
+        fi
+
     - name: Post Comment
+      if: env.HANDLING_MODE == 'remediate'
       uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
@@ -120,8 +141,8 @@ runs:
           });
 
     - name: Add Label on Failure
+      if: env.HANDLING_MODE == 'remediate' && env.APPLY_SUCCEEDED == 'false'
       uses: actions/github-script@v6
-      if: ${{ steps.atmos-apply.outputs.status != 'succeeded' }}
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -137,8 +158,8 @@ runs:
           });
 
     - name: Close Issue on Success
+      if: env.HANDLING_MODE == 'remediate' && env.APPLY_SUCCEEDED == 'true'
       uses: actions/github-script@v6
-      if: ${{ steps.atmos-apply.outputs.status == 'succeeded' }}
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -164,3 +185,26 @@ runs:
           } catch (error) {
             console.log(`Label "${labelToRemove}" was not found on the issue.`);
           }
+
+    - name: Post Comment when Drift Discarded
+      if: env.HANDLING_MODE == 'discard'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+          const body = `Issue was closed without remediation`;
+          const labelToAdd = 'discarded';
+
+          await github.rest.issues.addLabels({
+            ...repository,
+            issue_number: issueNumber,
+            labels: [labelToAdd]
+          });
+
+          github.rest.issues.createComment({
+            ...repository,
+            issue_number: issueNumber,
+            body: body
+          });
