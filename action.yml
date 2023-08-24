@@ -194,7 +194,7 @@ runs:
         script: |
           const issueNumber = ${{ inputs.issue-number }};
           const repository = context.repo;
-          const body = `Issue was closed without remediation`;
+          const body = `Drift discarded without remediation`;
           const labelToAdd = 'discarded';
 
           await github.rest.issues.addLabels({
