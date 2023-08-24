@@ -60,6 +60,8 @@ It's 100% Open Source and licensed under the [APACHE2](LICENSE).
 
 ## Introduction
 
+This action is used for drift remediation.
+
 There is another companion action [github-action-atmos-terraform-drift-detection](https://github.com/cloudposse/github-action-atmos-terraform-drift-detection).
 
 
@@ -87,13 +89,15 @@ permissions:
   contents: read
 
 jobs:
-  drift-remediation:
-    runs-on: ubuntu-latest
-    name: Drift Remediation
-    if: contains(github.event.issue.labels.*.name, 'remediate')
+  remediate-drift:
+    runs-on: self-hosted
+    name: Remediate Drift
+    if: |
+      github.event.action == 'labeled' &&
+      contains(github.event.issue.labels.*.name, 'apply')
     steps:
-      - name: Drift Remediate
-        uses: cloudposse/github-action-atmos-terraform-drift-remediation@v0
+      - name: Remediate Drift
+        uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
         with:
           issue-number: ${{ github.event.issue.number }}
           atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
@@ -120,10 +124,11 @@ jobs:
 | aws-region | AWS region for assuming identity. | us-east-1 | false |
 | debug | Enable action debug mode. Default: 'false' | false | false |
 | issue-number | Issue Number | N/A | true |
-| terraform-apply-role | The AWS role to be used to apply Terraform. | N/A | true |
-| terraform-state-bucket | The S3 Bucket where the planfiles are stored. | N/A | true |
-| terraform-state-role | The AWS role to be used to retrieve the planfile from AWS. | N/A | true |
-| terraform-state-table | The DynamoDB table where planfile metadata is stored. | N/A | true |
+| mode | Drift handling mode. One of ['remediate', 'discard'] | remediate | false |
+| terraform-apply-role | The AWS role to be used to apply Terraform. Required for mode 'remediate'. | N/A | false |
+| terraform-state-bucket | The S3 Bucket where the planfiles are stored. Required for mode 'remediate'. | N/A | false |
+| terraform-state-role | The AWS role to be used to retrieve the planfile from AWS. Required for mode 'remediate'. | N/A | false |
+| terraform-state-table | The DynamoDB table where planfile metadata is stored. Required for mode 'remediate'. | N/A | false |
 | terraform-version | The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`. | latest | false |
 | token | Used to pull node distributions for Atmos from Cloud Posse's GitHub repository. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting. | ${{ github.server\_url == 'https://github.com' && github.token \|\| '' }} | false |
 

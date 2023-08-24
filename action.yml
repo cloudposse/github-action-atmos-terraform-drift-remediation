@@ -10,7 +10,8 @@ inputs:
     required: true
   mode:
     description: "Drift handling mode. One of ['remediate', 'discard']"
-    required: true
+    required: false
+    default: 'remediate'
   terraform-apply-role:
     description: "The AWS role to be used to apply Terraform. Required for mode 'remediate'."
     required: false

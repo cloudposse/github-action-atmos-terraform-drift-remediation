@@ -28,6 +28,8 @@ related: []
 description: This Github Action is used to remediate drift
 
 introduction: |-
+  This action is used for drift remediation.
+
   There is another companion action [github-action-atmos-terraform-drift-detection](https://github.com/cloudposse/github-action-atmos-terraform-drift-detection).
 
 references:
@@ -65,13 +67,15 @@ usage: |-
     contents: read
 
   jobs:
-    drift-remediation:
-      runs-on: ubuntu-latest
-      name: Drift Remediation
-      if: contains(github.event.issue.labels.*.name, 'remediate')
+    remediate-drift:
+      runs-on: self-hosted
+      name: Remediate Drift
+      if: |
+        github.event.action == 'labeled' &&
+        contains(github.event.issue.labels.*.name, 'apply')
       steps:
-        - name: Drift Remediate
-          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v0
+        - name: Remediate Drift
+          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
           with:
             issue-number: ${{ github.event.issue.number }}
             atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
