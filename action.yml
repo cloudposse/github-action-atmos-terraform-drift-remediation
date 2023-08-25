@@ -75,21 +75,23 @@ runs:
               issue_number: ${{ inputs.issue-number }},
             });
 
-            const description = issue.data.body;
-            const regex = /```json\s([\s\S]+?)\s```/;
+            function getMetadataFromIssueBody(body) {
+              const regex = /```json\s([\s\S]+?)\s```/;
+              const matched = body.match(regex);
 
-            const matched = description.match(regex);
-
-            if (matched && matched[1]) {
-              const metadata = JSON.parse(matched[1]);
-
-              core.setOutput('component', metadata.component);
-              core.setOutput('stack', metadata.stack);
-              core.setOutput('component-path', metadata.componentPath);
-              core.setOutput('commit-sha', metadata.commitSHA);
-            } else {
-              core.setFailed("Invalid metadata in the issue description");
+              if (matched && matched[1]) {
+                return JSON.parse(matched[1], 'utf8');
+              } else {
+                throw new Error("Invalid metadata in the issue description");
+              }
             }
+
+            const metadata = getMetadataFromIssueBody(issue.data.body);
+
+            core.setOutput('component', metadata.component);
+            core.setOutput('stack', metadata.stack);
+            core.setOutput('component-path', metadata.componentPath);
+            core.setOutput('commit-sha', metadata.commitSHA);
           } catch (error) {
             core.setFailed(error.message);
           }
