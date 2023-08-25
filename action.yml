@@ -8,21 +8,21 @@ inputs:
   issue-number:
     description: "Issue Number"
     required: true
-  mode:
-    description: "Drift handling mode. One of ['remediate', 'discard']"
+  action:
+    description: "Drift remediation action. One of ['remediate', 'discard']"
     required: false
     default: 'remediate'
   terraform-apply-role:
-    description: "The AWS role to be used to apply Terraform. Required for mode 'remediate'."
+    description: "The AWS role to be used to apply Terraform. Required for action 'remediate'."
     required: false
   terraform-state-role:
-    description: "The AWS role to be used to retrieve the planfile from AWS. Required for mode 'remediate'."
+    description: "The AWS role to be used to retrieve the planfile from AWS. Required for action 'remediate'."
     required: false
   terraform-state-bucket:
-    description: "The S3 Bucket where the planfiles are stored. Required for mode 'remediate'."
+    description: "The S3 Bucket where the planfiles are stored. Required for action 'remediate'."
     required: false
   terraform-state-table:
-    description: "The DynamoDB table where planfile metadata is stored. Required for mode 'remediate'."
+    description: "The DynamoDB table where planfile metadata is stored. Required for action 'remediate'."
     required: false
   aws-region:
     description: "AWS region for assuming identity."
@@ -57,11 +57,11 @@ runs:
     - name: Define Job Control State Variables
       shell: bash
       run: |
-        echo "HANDLING_MODE=${{ inputs.mode }}" >> $GITHUB_ENV
+        echo "ACTION=${{ inputs.action }}" >> $GITHUB_ENV
         echo "APPLY_SUCCEEDED=false" >> $GITHUB_ENV
 
     - name: Get Issue Metadata
-      if: env.HANDLING_MODE == 'remediate'
+      if: env.ACTION == 'remediate'
       id: metadata
       uses: actions/github-script@v6
       with:
@@ -95,7 +95,7 @@ runs:
           }
 
     - name: Atmos Apply
-      if: env.HANDLING_MODE == 'remediate'
+      if: env.ACTION == 'remediate'
       id: atmos-apply
       uses: cloudposse/github-action-atmos-terraform-apply@drift-detection-approach-4
       with:
@@ -124,7 +124,7 @@ runs:
         fi
 
     - name: Post Comment
-      if: env.HANDLING_MODE == 'remediate'
+      if: env.ACTION == 'remediate'
       uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
@@ -142,7 +142,7 @@ runs:
           });
 
     - name: Add Label on Failure
-      if: env.HANDLING_MODE == 'remediate' && env.APPLY_SUCCEEDED == 'false'
+      if: env.ACTION == 'remediate' && env.APPLY_SUCCEEDED == 'false'
       uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
@@ -159,7 +159,7 @@ runs:
           });
 
     - name: Close Issue on Success
-      if: env.HANDLING_MODE == 'remediate' && env.APPLY_SUCCEEDED == 'true'
+      if: env.ACTION == 'remediate' && env.APPLY_SUCCEEDED == 'true'
       uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
@@ -167,28 +167,40 @@ runs:
           const issueNumber = ${{ inputs.issue-number }};
           const repository = context.repo;
 
+          function addLabel(repository, issueNumber, label) {
+            await github.rest.issues.addLabels({
+              ...repository,
+              issue_number: issueNumber,
+              labels: [label]
+            });
+          }
+
+          function removeLabel(repository, issueNumber, label) {
+            try {
+              await github.rest.issues.removeLabel({
+                ...repository,
+                issue_number: issueNumber,
+                name: label
+              });
+
+              console.log(`Label "${label}" removed successfully.`);
+            } catch (error) {
+              console.log(`Label "${label}" was not found on the issue.`);
+            }
+          }
+
           await github.rest.issues.update({
             ...repository,
             issue_number: issueNumber,
             state: 'closed'
           });
 
-          const labelToRemove = 'failed';
-
-          try {
-            await github.rest.issues.removeLabel({
-              ...repository,
-              issue_number: issueNumber,
-              name: labelToRemove
-            });
-
-            console.log(`Label "${labelToRemove}" removed successfully.`);
-          } catch (error) {
-            console.log(`Label "${labelToRemove}" was not found on the issue.`);
-          }
+          removeLabel(repository, issueNumber, "failed");
+          removeLabel(repository, issueNumber, "apply");
+          addLabel(repository, issueNumber, "remediated");
 
     - name: Post Comment when Drift Discarded
-      if: env.HANDLING_MODE == 'discard'
+      if: env.ACTION == 'discard'
       uses: actions/github-script@v6
       with:
         github-token: ${{ inputs.token }}
