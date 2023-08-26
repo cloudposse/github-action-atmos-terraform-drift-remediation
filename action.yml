@@ -154,7 +154,7 @@ runs:
 
           const labelToAdd = 'failed';
 
-          await github.rest.issues.addLabels({
+          github.rest.issues.addLabels({
             ...repository,
             issue_number: issueNumber,
             labels: [labelToAdd]
@@ -170,7 +170,7 @@ runs:
           const repository = context.repo;
 
           function addLabel(repository, issueNumber, label) {
-            await github.rest.issues.addLabels({
+            github.rest.issues.addLabels({
               ...repository,
               issue_number: issueNumber,
               labels: [label]
@@ -179,7 +179,7 @@ runs:
 
           function removeLabel(repository, issueNumber, label) {
             try {
-              await github.rest.issues.removeLabel({
+              github.rest.issues.removeLabel({
                 ...repository,
                 issue_number: issueNumber,
                 name: label
@@ -191,7 +191,7 @@ runs:
             }
           }
 
-          await github.rest.issues.update({
+          github.rest.issues.update({
             ...repository,
             issue_number: issueNumber,
             state: 'closed'
@@ -212,7 +212,7 @@ runs:
           const body = `Drift discarded without remediation`;
           const labelToAdd = 'discarded';
 
-          await github.rest.issues.addLabels({
+          github.rest.issues.addLabels({
             ...repository,
             issue_number: issueNumber,
             labels: [labelToAdd]
