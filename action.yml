@@ -177,9 +177,9 @@ runs:
             });
           }
 
-          function removeLabel(repository, issueNumber, label) {
+          async function removeLabel(repository, issueNumber, label) {
             try {
-              github.rest.issues.removeLabel({
+              await github.rest.issues.removeLabel({
                 ...repository,
                 issue_number: issueNumber,
                 name: label
@@ -197,8 +197,8 @@ runs:
             state: 'closed'
           });
 
-          removeLabel(repository, issueNumber, "failed");
-          removeLabel(repository, issueNumber, "apply");
+          await removeLabel(repository, issueNumber, "failed");
+          await removeLabel(repository, issueNumber, "apply");
           addLabel(repository, issueNumber, "remediated");
 
     - name: Post Comment when Drift Discarded
