@@ -52,7 +52,7 @@ references:
 usage: |-
   ### Workflow example
 
-  In this example drift will be remediated when user sets label `remediate` to an issue.
+  In this example drift will be remediated when user sets label `apply` to an issue.
 
   ```yaml
   name: 👽 Atmos Terraform Drift Remediation
@@ -60,7 +60,9 @@ usage: |-
 
   on:
     issues:
-      types: [labeled]
+      types:
+        - labeled
+        - closed
 
   permissions:
     id-token: write
@@ -68,22 +70,36 @@ usage: |-
 
   jobs:
     remediate-drift:
-      runs-on: self-hosted
+      runs-on: ubuntu-latest
       name: Remediate Drift
       if: |
         github.event.action == 'labeled' &&
-        contains(github.event.issue.labels.*.name, 'apply')
+        contains(join(github.event.issue.labels.*.name, ','), 'apply')
       steps:
         - name: Remediate Drift
           uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
           with:
             issue-number: ${{ github.event.issue.number }}
+            action: remediate
             atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
             terraform-plan-role: "arn:aws:iam::111111111111:role/acme-core-gbl-identity-gitops"
             terraform-state-bucket: "acme-core-ue2-auto-gitops"
             terraform-state-role: "arn:aws:iam::999999999999:role/acme-core-ue2-auto-gitops-gha"
             terraform-state-table: "acme-core-ue2-auto-gitops"
             aws-region: "us-east-2"
+
+    discard-drift:
+      runs-on: ubuntu-latest
+      name: Discard Drift
+      if: |
+        github.event.action == 'closed' &&
+        !contains(join(github.event.issue.labels.*.name, ','), 'remediated')
+      steps:
+        - name: Discard Drift
+          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
+          with:
+            issue-number: ${{ github.event.issue.number }}
+            action: discard
   ```
 
 include:
