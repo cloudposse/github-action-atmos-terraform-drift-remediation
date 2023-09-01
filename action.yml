@@ -1,0 +1,225 @@
+name: 'GitHub Action Atmos Terraform Drift Remediation'
+description: 'GitHub Action Atmos Terraform Drift Remediation'
+author: hello@cloudposse.com
+branding:
+  icon: 'server'
+  color: 'white'
+inputs:
+  issue-number:
+    description: "Issue Number"
+    required: true
+  action:
+    description: "Drift remediation action. One of ['remediate', 'discard']"
+    required: false
+    default: 'remediate'
+  terraform-apply-role:
+    description: "The AWS role to be used to apply Terraform. Required for action 'remediate'."
+    required: false
+  terraform-state-role:
+    description: "The AWS role to be used to retrieve the planfile from AWS. Required for action 'remediate'."
+    required: false
+  terraform-state-bucket:
+    description: "The S3 Bucket where the planfiles are stored. Required for action 'remediate'."
+    required: false
+  terraform-state-table:
+    description: "The DynamoDB table where planfile metadata is stored. Required for action 'remediate'."
+    required: false
+  aws-region:
+    description: "AWS region for assuming identity."
+    required: false
+    default: "us-east-1"
+  atmos-version:
+    description: "Atmos version to use for vendoring. Default 'latest'"
+    required: false
+    default: 'latest'
+  atmos-config-path:
+    description: The path to the folder where atmos.yaml file is located
+    required: false
+    default: '.'
+  terraform-version:
+    description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
+    default: 'latest'
+    required: false
+  debug:
+    description: "Enable action debug mode. Default: 'false'"
+    default: 'false'
+    required: false
+  token:
+    description:
+      Used to pull node distributions for Atmos from Cloud Posse's GitHub repository. Since there's a default, this is typically
+      not supplied by the user. When running this action on github.com, the default value is sufficient. When running on
+      GHES, you can pass a personal access token for github.com if you are experiencing rate limiting.
+    default: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Define Job Control State Variables
+      shell: bash
+      run: |
+        echo "ACTION=${{ inputs.action }}" >> $GITHUB_ENV
+        echo "APPLY_SUCCEEDED=false" >> $GITHUB_ENV
+
+    - name: Get Issue Metadata
+      if: env.ACTION == 'remediate'
+      id: metadata
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          try {
+            const repository = context.repo;
+
+            const issue = await github.rest.issues.get({
+              ...repository,
+              issue_number: ${{ inputs.issue-number }},
+            });
+
+            function getMetadataFromIssueBody(body) {
+              const regex = /```json\s([\s\S]+?)\s```/;
+              const matched = body.match(regex);
+
+              if (matched && matched[1]) {
+                return JSON.parse(matched[1], 'utf8');
+              } else {
+                throw new Error("Invalid metadata in the issue description");
+              }
+            }
+
+            const metadata = getMetadataFromIssueBody(issue.data.body);
+
+            core.setOutput('component', metadata.component);
+            core.setOutput('stack', metadata.stack);
+            core.setOutput('component-path', metadata.componentPath);
+            core.setOutput('commit-sha', metadata.commitSHA);
+          } catch (error) {
+            core.setFailed(error.message);
+          }
+
+    - name: Atmos Apply
+      if: env.ACTION == 'remediate'
+      id: atmos-apply
+      uses: cloudposse/github-action-atmos-terraform-apply@drift-detection-approach-4
+      with:
+        component: ${{ steps.metadata.outputs.component }}
+        stack: ${{ steps.metadata.outputs.stack }}
+        component-path: ${{ steps.metadata.outputs.component-path }}
+        commit-sha: ${{ steps.metadata.outputs.commit-sha }}
+        terraform-apply-role: ${{ inputs.terraform-apply-role }}
+        terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
+        terraform-state-role: ${{ inputs.terraform-state-role }}
+        terraform-state-table: ${{ inputs.terraform-state-table }}
+        aws-region: ${{ inputs.aws-region }}
+        token: ${{ inputs.token }}
+        atmos-version: ${{ inputs.atmos-version }}
+        atmos-config-path: ${{ inputs.atmos-config-path }}
+        terraform-version: ${{ inputs.terraform-version }}
+        debug: ${{ inputs.debug }}
+
+    - name: Check If GitHub Actions is Enabled For Component
+      shell: bash
+      run: |
+        if [[ "${{ steps.atmos-apply.outputs.status != 'succeeded' }}" ]]; then
+          echo "APPLY_SUCCEEDED=true" >> $GITHUB_ENV
+        else
+          echo "APPLY_SUCCEEDED=false" >> $GITHUB_ENV
+        fi
+
+    - name: Post Comment
+      if: env.ACTION == 'remediate'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const fs = require('fs');
+
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+          const body = fs.readFileSync("${{ github.workspace }}/atmos-apply-summary.md", 'utf8');
+
+          github.rest.issues.createComment({
+            ...repository,
+            issue_number: issueNumber,
+            body: body,
+          });
+
+    - name: Add Label on Failure
+      if: env.ACTION == 'remediate' && env.APPLY_SUCCEEDED == 'false'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+
+          const labelToAdd = 'failed';
+
+          github.rest.issues.addLabels({
+            ...repository,
+            issue_number: issueNumber,
+            labels: [labelToAdd]
+          });
+
+    - name: Close Issue on Success
+      if: env.ACTION == 'remediate' && env.APPLY_SUCCEEDED == 'true'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+
+          function addLabel(repository, issueNumber, label) {
+            github.rest.issues.addLabels({
+              ...repository,
+              issue_number: issueNumber,
+              labels: [label]
+            });
+          }
+
+          async function removeLabel(repository, issueNumber, label) {
+            try {
+              await github.rest.issues.removeLabel({
+                ...repository,
+                issue_number: issueNumber,
+                name: label
+              });
+
+              console.log(`Label "${label}" removed successfully.`);
+            } catch (error) {
+              console.log(`Label "${label}" was not found on the issue.`);
+            }
+          }
+
+          github.rest.issues.update({
+            ...repository,
+            issue_number: issueNumber,
+            state: 'closed'
+          });
+
+          await removeLabel(repository, issueNumber, "failed");
+          await removeLabel(repository, issueNumber, "apply");
+          addLabel(repository, issueNumber, "remediated");
+
+    - name: Post Comment when Drift Discarded
+      if: env.ACTION == 'discard'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueNumber = ${{ inputs.issue-number }};
+          const repository = context.repo;
+          const body = `Drift discarded without remediation`;
+          const labelToAdd = 'discarded';
+
+          github.rest.issues.addLabels({
+            ...repository,
+            issue_number: issueNumber,
+            labels: [labelToAdd]
+          });
+
+          github.rest.issues.createComment({
+            ...repository,
+            issue_number: issueNumber,
+            body: body
+          });
