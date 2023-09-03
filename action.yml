@@ -99,12 +99,12 @@ runs:
     - name: Atmos Apply
       if: env.ACTION == 'remediate'
       id: atmos-apply
-      uses: cloudposse/github-action-atmos-terraform-apply@drift-detection-approach-4
+      uses: cloudposse/github-action-atmos-terraform-apply@v0
       with:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
         component-path: ${{ steps.metadata.outputs.component-path }}
-        commit-sha: ${{ steps.metadata.outputs.commit-sha }}
+        sha: ${{ steps.metadata.outputs.commit-sha }}
         terraform-apply-role: ${{ inputs.terraform-apply-role }}
         terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
         terraform-state-role: ${{ inputs.terraform-state-role }}
