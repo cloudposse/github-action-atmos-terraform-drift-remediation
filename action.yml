@@ -12,34 +12,10 @@ inputs:
     description: "Drift remediation action. One of ['remediate', 'discard']"
     required: false
     default: 'remediate'
-  terraform-apply-role:
-    description: "The AWS role to be used to apply Terraform. Required for action 'remediate'."
+  atmos-gitops-config-path:
+    description: The path to the atmos-gitops.yaml file
     required: false
-  terraform-state-role:
-    description: "The AWS role to be used to retrieve the planfile from AWS. Required for action 'remediate'."
-    required: false
-  terraform-state-bucket:
-    description: "The S3 Bucket where the planfiles are stored. Required for action 'remediate'."
-    required: false
-  terraform-state-table:
-    description: "The DynamoDB table where planfile metadata is stored. Required for action 'remediate'."
-    required: false
-  aws-region:
-    description: "AWS region for assuming identity."
-    required: false
-    default: "us-east-1"
-  atmos-version:
-    description: "Atmos version to use for vendoring. Default 'latest'"
-    required: false
-    default: 'latest'
-  atmos-config-path:
-    description: The path to the folder where atmos.yaml file is located
-    required: false
-    default: '.'
-  terraform-version:
-    description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
-    default: 'latest'
-    required: false
+    default: ./.github/config/atmos-gitops.yaml
   debug:
     description: "Enable action debug mode. Default: 'false'"
     default: 'false'
@@ -90,7 +66,6 @@ runs:
 
             core.setOutput('component', metadata.component);
             core.setOutput('stack', metadata.stack);
-            core.setOutput('component-path', metadata.componentPath);
             core.setOutput('commit-sha', metadata.commitSHA);
           } catch (error) {
             core.setFailed(error.message);
@@ -99,21 +74,12 @@ runs:
     - name: Atmos Apply
       if: env.ACTION == 'remediate'
       id: atmos-apply
-      uses: cloudposse/github-action-atmos-terraform-apply@v0
+      uses: cloudposse/github-action-atmos-terraform-apply@incapsulate-configs
       with:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
-        component-path: ${{ steps.metadata.outputs.component-path }}
         sha: ${{ steps.metadata.outputs.commit-sha }}
-        terraform-apply-role: ${{ inputs.terraform-apply-role }}
-        terraform-state-bucket: ${{ inputs.terraform-state-bucket }}
-        terraform-state-role: ${{ inputs.terraform-state-role }}
-        terraform-state-table: ${{ inputs.terraform-state-table }}
-        aws-region: ${{ inputs.aws-region }}
-        token: ${{ inputs.token }}
-        atmos-version: ${{ inputs.atmos-version }}
-        atmos-config-path: ${{ inputs.atmos-config-path }}
-        terraform-version: ${{ inputs.terraform-version }}
+        atmos-gitops-config-path: ${{ inputs.atmos-gitops-config-path }}
         debug: ${{ inputs.debug }}
 
     - name: Check If GitHub Actions is Enabled For Component
