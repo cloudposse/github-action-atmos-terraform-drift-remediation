@@ -72,6 +72,26 @@ There is another companion action [github-action-atmos-terraform-drift-detection
 
 
 
+### Config
+
+The action expects the atmos gitops configuration file to be present in the repository in `./.github/atmos-gitops.yaml`.
+The config should have the following structure:
+
+```yaml
+  atmos-version: 1.45.3
+  atmos-config-path: ./rootfs/usr/local/etc/atmos/
+  terraform-state-bucket: cptest-core-ue2-auto-gitops
+  terraform-state-table: cptest-core-ue2-auto-gitops
+  terraform-state-role: arn:aws:iam::xxxxxxxxxxxx:role/cptest-core-ue2-auto-gitops-gha
+  terraform-plan-role: arn:aws:iam::yyyyyyyyyyyy:role/cptest-core-gbl-identity-gitops
+  terraform-apply-role: arn:aws:iam::yyyyyyyyyyyy:role/cptest-core-gbl-identity-gitops
+  terraform-version: 1.5.2
+  aws-region: us-east-2
+  enable-infracost: false
+  sort-by: .stack_slug
+  group-by: .stack_slug | split("-") | [.[0], .[2]] | join("-")  
+```
+
 ### Workflow example
 
 In this example drift will be remediated when user sets label `apply` to an issue.
@@ -99,7 +119,7 @@ jobs:
       contains(join(github.event.issue.labels.*.name, ','), 'apply')
     steps:
       - name: Remediate Drift
-        uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
+        uses: cloudposse/github-action-atmos-terraform-drift-remediation@v2
         with:
           issue-number: ${{ github.event.issue.number }}
           action: remediate
@@ -118,10 +138,57 @@ jobs:
       !contains(join(github.event.issue.labels.*.name, ','), 'remediated')
     steps:
       - name: Discard Drift
-        uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
+        uses: cloudposse/github-action-atmos-terraform-drift-remediation@v2
         with:
           issue-number: ${{ github.event.issue.number }}
           action: discard
+```
+
+### Migrate from `v1` to `v2`
+
+`v2` drop `component-path` variable. Now it fetches from `atmos.yaml` file automatically.
+
+`v2` moved variables from `inputs` to atmos gitops config path `./.github/atmos-gitops.yaml`
+
+|         name             |
+|--------------------------|
+| `atmos-version`          |
+| `atmos-config-path`      |
+| `terraform-state-bucket` |
+| `terraform-state-table`  |
+| `terraform-state-role`   |
+| `terraform-plan-role`    |
+| `terraform-apply-role`   |
+| `terraform-version`      |
+| `aws-region`             |
+| `enable-infracost`       |
+
+
+If you want `v2` having the same behaviour as `v1` you should create config `./.github/atmos-gitops.yaml` with the same variables as in `v1` inputs.
+
+```yaml
+  - name: Remediate Drift
+    uses: cloudposse/github-action-atmos-terraform-drift-remediation@v2
+    with:
+      issue-number: ${{ github.event.issue.number }}
+      action: remediate
+      atmos-gitops-config-path: ./.github/atmos-gitops.yaml  
+```
+
+same behaviour as
+
+```yaml
+  - name: Remediate Drift
+    uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
+    with:
+      issue-number: ${{ github.event.issue.number }}
+      action: remediate
+      atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
+      terraform-plan-role: "arn:aws:iam::111111111111:role/acme-core-gbl-identity-gitops"
+      terraform-state-bucket: "acme-core-ue2-auto-gitops"
+      terraform-state-role: "arn:aws:iam::999999999999:role/acme-core-ue2-auto-gitops-gha"
+      terraform-state-table: "acme-core-ue2-auto-gitops"
+      aws-region: "us-east-2"
 ```
 
 
@@ -136,16 +203,9 @@ jobs:
 | Name | Description | Default | Required |
 |------|-------------|---------|----------|
 | action | Drift remediation action. One of ['remediate', 'discard'] | remediate | false |
-| atmos-config-path | The path to the folder where atmos.yaml file is located | . | false |
-| atmos-version | Atmos version to use for vendoring. Default 'latest' | latest | false |
-| aws-region | AWS region for assuming identity. | us-east-1 | false |
+| atmos-gitops-config-path | The path to the atmos-gitops.yaml file | ./.github/config/atmos-gitops.yaml | false |
 | debug | Enable action debug mode. Default: 'false' | false | false |
 | issue-number | Issue Number | N/A | true |
-| terraform-apply-role | The AWS role to be used to apply Terraform. Required for action 'remediate'. | N/A | false |
-| terraform-state-bucket | The S3 Bucket where the planfiles are stored. Required for action 'remediate'. | N/A | false |
-| terraform-state-role | The AWS role to be used to retrieve the planfile from AWS. Required for action 'remediate'. | N/A | false |
-| terraform-state-table | The DynamoDB table where planfile metadata is stored. Required for action 'remediate'. | N/A | false |
-| terraform-version | The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`. | latest | false |
 | token | Used to pull node distributions for Atmos from Cloud Posse's GitHub repository. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting. | ${{ github.server\_url == 'https://github.com' && github.token \|\| '' }} | false |
 
 
