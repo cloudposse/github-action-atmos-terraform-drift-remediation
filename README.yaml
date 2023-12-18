@@ -70,6 +70,9 @@ usage: |-
     group-by: .stack_slug | split("-") | [.[0], .[2]] | join("-")  
   ```
   
+  > [!IMPORTANT]
+  > **Please note!** the `terraform-state-*` parameters refer to the S3 Bucket and corresponding meta storage DynamoDB table used to store the Terraform Plan files, and not the "Terraform State". These parameters will be renamed in a subsequent release.  
+  
   ### Workflow example
 
   In this example drift will be remediated when user sets label `apply` to an issue.
@@ -97,17 +100,12 @@ usage: |-
         contains(join(github.event.issue.labels.*.name, ','), 'apply')
       steps:
         - name: Remediate Drift
-          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v2
+          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
           with:
             issue-number: ${{ github.event.issue.number }}
             action: remediate
-            atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
-            terraform-plan-role: "arn:aws:iam::111111111111:role/acme-core-gbl-identity-gitops"
-            terraform-state-bucket: "acme-core-ue2-auto-gitops"
-            terraform-state-role: "arn:aws:iam::999999999999:role/acme-core-ue2-auto-gitops-gha"
-            terraform-state-table: "acme-core-ue2-auto-gitops"
-            aws-region: "us-east-2"
-
+            atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml
+  
     discard-drift:
       runs-on: ubuntu-latest
       name: Discard Drift
@@ -116,18 +114,18 @@ usage: |-
         !contains(join(github.event.issue.labels.*.name, ','), 'remediated')
       steps:
         - name: Discard Drift
-          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v2
+          uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
           with:
             issue-number: ${{ github.event.issue.number }}
             action: discard
+            atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml    
   ```
   
-  ### Migrating from `v1` to `v2`
+  ### Migrating from `v0` to `v1`
   
-  `v2` drop `component-path` variable. Now it fetches from `atmos.yaml` file automatically.
-  
-  `v2` moved variables from `inputs` to atmos gitops config path `./.github/config/atmos-gitops.yaml`
-  
+  1.  `v2` drops the `component-path` variable and instead fetches if directly from the [`atmos.yaml` file](https://atmos.tools/cli/configuration/) automatically. Simply remove the `component-path` argument from your invocations of the `cloudposse/github-action-atmos-terraform-plan` action.
+  2.  `v2` moves most of the `inputs` to the Atmos GitOps config path `./.github/config/atmos-gitops.yaml`. Simply create this file, transfer your settings to it, then remove the corresponding arguments from your invocations of the `cloudposse/github-action-atmos-terraform-plan` action.  
+
   |         name             |
   |--------------------------|
   | `atmos-version`          |
@@ -142,22 +140,22 @@ usage: |-
   | `enable-infracost`       |
   
   
-  If you want the same behavior in `v2`  as in`v1` you should create config `./.github/config/atmos-gitops.yaml` with the same variables as in `v1` inputs.
+  If you want the same behavior in `v1`  as in`v0` you should create config `./.github/config/atmos-gitops.yaml` with the same variables as in `v0` inputs.
   
   ```yaml
     - name: Remediate Drift
-      uses: cloudposse/github-action-atmos-terraform-drift-remediation@v2
+      uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
       with:
         issue-number: ${{ github.event.issue.number }}
         action: remediate
         atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml  
   ```
   
-  same behaviour as
+   Which would produce the same behavior as in `v0`, doing this:
   
   ```yaml
     - name: Remediate Drift
-      uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
+      uses: cloudposse/github-action-atmos-terraform-drift-remediation@v0
       with:
         issue-number: ${{ github.event.issue.number }}
         action: remediate
