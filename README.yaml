@@ -50,6 +50,29 @@ references:
     url: "https://github.com/cloudposse/github-action-atmos-terraform-apply"
 
 usage: |-
+  ### Config
+
+  The action expects the atmos gitops configuration file to be present in the repository in `./.github/config/atmos-gitops.yaml`.
+  The config should have the following structure:
+  
+  ```yaml
+    atmos-version: 1.45.3
+    atmos-config-path: ./rootfs/usr/local/etc/atmos/
+    terraform-state-bucket: cptest-core-ue2-auto-gitops
+    terraform-state-table: cptest-core-ue2-auto-gitops
+    terraform-state-role: arn:aws:iam::xxxxxxxxxxxx:role/cptest-core-ue2-auto-gitops-gha
+    terraform-plan-role: arn:aws:iam::yyyyyyyyyyyy:role/cptest-core-gbl-identity-gitops
+    terraform-apply-role: arn:aws:iam::yyyyyyyyyyyy:role/cptest-core-gbl-identity-gitops
+    terraform-version: 1.5.2
+    aws-region: us-east-2
+    enable-infracost: false
+    sort-by: .stack_slug
+    group-by: .stack_slug | split("-") | [.[0], .[2]] | join("-")  
+  ```
+  
+  > [!IMPORTANT]
+  > **Please note!** the `terraform-state-*` parameters refer to the S3 Bucket and corresponding meta storage DynamoDB table used to store the Terraform Plan files, and not the "Terraform State". These parameters will be renamed in a subsequent release.  
+  
   ### Workflow example
 
   In this example drift will be remediated when user sets label `apply` to an issue.
@@ -81,13 +104,8 @@ usage: |-
           with:
             issue-number: ${{ github.event.issue.number }}
             action: remediate
-            atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
-            terraform-plan-role: "arn:aws:iam::111111111111:role/acme-core-gbl-identity-gitops"
-            terraform-state-bucket: "acme-core-ue2-auto-gitops"
-            terraform-state-role: "arn:aws:iam::999999999999:role/acme-core-ue2-auto-gitops-gha"
-            terraform-state-table: "acme-core-ue2-auto-gitops"
-            aws-region: "us-east-2"
-
+            atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml
+  
     discard-drift:
       runs-on: ubuntu-latest
       name: Discard Drift
@@ -100,7 +118,55 @@ usage: |-
           with:
             issue-number: ${{ github.event.issue.number }}
             action: discard
+            atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml    
   ```
+  
+  ### Migrating from `v0` to `v1`
+  
+  1.  `v2` drops the `component-path` variable and instead fetches if directly from the [`atmos.yaml` file](https://atmos.tools/cli/configuration/) automatically. Simply remove the `component-path` argument from your invocations of the `cloudposse/github-action-atmos-terraform-plan` action.
+  2.  `v2` moves most of the `inputs` to the Atmos GitOps config path `./.github/config/atmos-gitops.yaml`. Simply create this file, transfer your settings to it, then remove the corresponding arguments from your invocations of the `cloudposse/github-action-atmos-terraform-plan` action.  
+
+  |         name             |
+  |--------------------------|
+  | `atmos-version`          |
+  | `atmos-config-path`      |
+  | `terraform-state-bucket` |
+  | `terraform-state-table`  |
+  | `terraform-state-role`   |
+  | `terraform-plan-role`    |
+  | `terraform-apply-role`   |
+  | `terraform-version`      |
+  | `aws-region`             |
+  | `enable-infracost`       |
+  
+  
+  If you want the same behavior in `v1`  as in`v0` you should create config `./.github/config/atmos-gitops.yaml` with the same variables as in `v0` inputs.
+  
+  ```yaml
+    - name: Remediate Drift
+      uses: cloudposse/github-action-atmos-terraform-drift-remediation@v1
+      with:
+        issue-number: ${{ github.event.issue.number }}
+        action: remediate
+        atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml  
+  ```
+  
+   Which would produce the same behavior as in `v0`, doing this:
+  
+  ```yaml
+    - name: Remediate Drift
+      uses: cloudposse/github-action-atmos-terraform-drift-remediation@v0
+      with:
+        issue-number: ${{ github.event.issue.number }}
+        action: remediate
+        atmos-config-path: "${{ github.workspace }}/rootfs/usr/local/etc/atmos/"
+        terraform-plan-role: "arn:aws:iam::111111111111:role/acme-core-gbl-identity-gitops"
+        terraform-state-bucket: "acme-core-ue2-auto-gitops"
+        terraform-state-role: "arn:aws:iam::999999999999:role/acme-core-ue2-auto-gitops-gha"
+        terraform-state-table: "acme-core-ue2-auto-gitops"
+        aws-region: "us-east-2"
+  ```
+  
 
 include:
   - "docs/github-action.md"
