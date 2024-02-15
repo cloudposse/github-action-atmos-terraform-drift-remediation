@@ -12,10 +12,13 @@ inputs:
     description: "Drift remediation action. One of ['remediate', 'discard']"
     required: false
     default: 'remediate'
-  atmos-gitops-config-path:
-    description: The path to the atmos-gitops.yaml file
+  atmos-version:
+    description: The version of atmos to install
     required: false
-    default: ./.github/config/atmos-gitops.yaml
+    default: ">= 1.63.0"
+  atmos-config-path:
+    description: The path to the atmos.yaml file
+    required: true
   debug:
     description: "Enable action debug mode. Default: 'false'"
     default: 'false'
@@ -74,12 +77,13 @@ runs:
     - name: Atmos Apply
       if: env.ACTION == 'remediate'
       id: atmos-apply
-      uses: cloudposse/github-action-atmos-terraform-apply@v1
+      uses: cloudposse/github-action-atmos-terraform-apply@use-atmos-config
       with:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
         sha: ${{ steps.metadata.outputs.commit-sha }}
-        atmos-gitops-config-path: ${{ inputs.atmos-gitops-config-path }}
+        atmos-config-path: ${{ inputs.atmos-config-path }}
+        atmos-version: ${{ inputs.atmos-version }}
         debug: ${{ inputs.debug }}
 
     - name: Check If GitHub Actions is Enabled For Component
