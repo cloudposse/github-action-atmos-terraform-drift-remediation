@@ -108,7 +108,7 @@ usage: |-
           with:
             issue-number: ${{ github.event.issue.number }}
             action: remediate
-            atmos-config-path: ./
+            atmos-config-path: ./rootfs/usr/local/etc/atmos/
   
     discard-drift:
       runs-on: ubuntu-latest
@@ -160,7 +160,7 @@ usage: |-
   
   If you want `v2` having the same behaviour as `v1` you should  have 
   
-  `atmos.yaml`
+  `./.github/config/atmos-gitops.yaml`
   ```yaml
   ...
   
@@ -191,7 +191,7 @@ usage: |-
     with:
       issue-number: ${{ github.event.issue.number }}
       action: remediate
-      atmos-config-path: ./  
+      atmos-config-path: ./rootfs/usr/local/etc/atmos/  
   ``` 
   
   same behaviour as

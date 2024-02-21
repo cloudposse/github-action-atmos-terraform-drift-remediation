@@ -109,7 +109,7 @@ jobs:
         with:
           issue-number: ${{ github.event.issue.number }}
           action: remediate
-          atmos-config-path: ./
+          atmos-config-path: ./rootfs/usr/local/etc/atmos/
 
   discard-drift:
     runs-on: ubuntu-latest
@@ -161,7 +161,7 @@ The following configuration fields are now moved to `atmos.yaml`
 
 If you want `v2` having the same behaviour as `v1` you should  have 
 
-`atmos.yaml`
+`./.github/config/atmos-gitops.yaml`
 ```yaml
 ...
 
@@ -192,7 +192,7 @@ integrations:
   with:
     issue-number: ${{ github.event.issue.number }}
     action: remediate
-    atmos-config-path: ./  
+    atmos-config-path: ./rootfs/usr/local/etc/atmos/  
 ``` 
 
 same behaviour as
