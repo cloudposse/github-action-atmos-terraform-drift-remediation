@@ -85,11 +85,9 @@ runs:
     - name: Check If GitHub Actions is Enabled For Component
       shell: bash
       run: |
-        if [[ "${{ steps.atmos-apply.outputs.status != 'succeeded' }}" ]]; then
-          echo "APPLY_SUCCEEDED=true" >> $GITHUB_ENV
-        else
-          echo "APPLY_SUCCEEDED=false" >> $GITHUB_ENV
-        fi
+        apply_succeeded=${{ steps.atmos-apply.outputs.status != 'succeeded' }}
+        echo "APPLY_SUCCEEDED: $apply_succeeded"
+        echo "APPLY_SUCCEEDED=$apply_succeeded" >> $GITHUB_ENV
 
     - name: Post Comment
       if: env.ACTION == 'remediate'
