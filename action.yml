@@ -86,7 +86,7 @@ runs:
       shell: bash
       run: |
         echo "atmos-apply result: ${{ steps.atmos-apply.outputs.status }}"
-        apply_succeeded=${{ steps.atmos-apply.outputs.status != 'succeeded' }}
+        apply_succeeded=${{ steps.atmos-apply.outputs.status == 'succeeded' }}
         echo "APPLY_SUCCEEDED: $apply_succeeded"
         echo "APPLY_SUCCEEDED=$apply_succeeded" >> $GITHUB_ENV
 
