@@ -77,7 +77,7 @@ runs:
     - name: Atmos Apply
       if: env.ACTION == 'remediate'
       id: atmos-apply
-      uses: cloudposse/github-action-atmos-terraform-apply@use-atmos-config
+      uses: cloudposse/github-action-atmos-terraform-apply@v2
       with:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
