@@ -42,7 +42,7 @@ runs:
     - name: Get Issue Metadata
       if: env.ACTION == 'remediate'
       id: metadata
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -96,7 +96,7 @@ runs:
 
     - name: Post Comment
       if: env.ACTION == 'remediate'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -114,7 +114,7 @@ runs:
 
     - name: Add Label on Failure
       if: env.ACTION == 'remediate' && env.APPLY_SUCCEEDED == 'false'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -131,7 +131,7 @@ runs:
 
     - name: Close Issue on Success
       if: env.ACTION == 'remediate' && env.APPLY_SUCCEEDED == 'true'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.token }}
         script: |
@@ -172,7 +172,7 @@ runs:
 
     - name: Post Comment when Drift Discarded
       if: env.ACTION == 'discard'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.token }}
         script: |
