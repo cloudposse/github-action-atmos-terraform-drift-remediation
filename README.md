@@ -55,13 +55,26 @@ There is another companion action [github-action-atmos-terraform-drift-detection
 
 ### Config
 
+> [!IMPORTANT]
+> **Please note!** This GitHub Action only works with `atmos >= 1.99.0`.
+> If you are using `atmos >= 1.63.0, < 1.99.0` please use `v2` version of this action.  
+> If you are using `atmos < 1.63.0` please use `v1` version of this action.
+
 The action expects the atmos configuration file `atmos.yaml` to be present in the repository.
+
+The action supports AWS and Azure to store Terraform plan files. 
+You can read more about plan storage in the [cloudposse/github-action-terraform-plan-storage](https://github.com/cloudposse/github-action-terraform-plan-storage?tab=readme-ov-file#aws-default) documentation. 
+Depends of cloud provider the following fields should be set in the `atmos.yaml`:
+
+#### AWS
+
 The config should have the following structure:
 
 ```yaml
 integrations:
   github:
     gitops:
+      opentofu-version: 1.7.3  
       terraform-version: 1.5.2
       infracost-enabled: false
       artifact-storage:
@@ -71,14 +84,92 @@ integrations:
         role: arn:aws:iam::xxxxxxxxxxxx:role/cptest-core-ue2-auto-gitops-gha
       role:
         plan: arn:aws:iam::yyyyyyyyyyyy:role/cptest-core-gbl-identity-gitops
+        # Set `apply` empty if you don't want to assume IAM role before terraform apply
         apply: arn:aws:iam::yyyyyyyyyyyy:role/cptest-core-gbl-identity-gitops
       matrix:
         sort-by: .stack_slug
         group-by: .stack_slug | split("-") | [.[0], .[2]] | join("-")
 ```
 
+#### Azure
+
+The config should have the following structure:
+
+```yaml
+integrations:
+  github:
+    gitops:
+      opentofu-version: 1.7.3  
+      terraform-version: 1.5.2
+      infracost-enabled: false
+      artifact-storage:
+        plan-repository-type: azureblob
+        blob-account-name: tfplans
+        blob-container-name: plans
+        metadata-repository-type: cosmos
+        cosmos-container-name: terraform-plan-storage
+        cosmos-database-name: terraform-plan-storage
+        cosmos-endpoint: "https://my-cosmo-account.documents.azure.com:443/"
+      # We remove the `role` section as it is AWS specific
+      matrix:
+        sort-by: .stack_slug
+        group-by: .stack_slug | split("-") | [.[0], .[2]] | join("-")
+```
+
+### Stack level configuration
+
 > [!IMPORTANT]
-> **Please note!** This GitHub Action only works with `atmos >= 1.63.0`. If you are using `atmos < 1.63.0` please use `v1` version of this action.    
+> Wherever it is possible to specify `integration.github.gitops` on stack level 
+> it is required to define default values in `atmos.yaml`
+
+It is possible to override integration settings on a stack level by defining `settings.integrations`.
+
+```yaml
+components:
+  terraform:
+    foobar:
+      settings:
+        integrations:
+          github:
+            gitops:
+              artifact-storage:
+                bucket: cptest-plat-ue2-auto-gitops
+                table: cptest-plat-ue2-auto-gitops-plan-storage
+                role: arn:aws:iam::xxxxxxxxxxxx:role/cptest-plat-ue2-auto-gitops-gha
+              role:
+                # Set `plan` empty if you don't want to assume IAM role before terraform plan  
+                plan: arn:aws:iam::yyyyyyyyyyyy:role/cptest-plat-gbl-identity-gitops
+                apply: arn:aws:iam::yyyyyyyyyyyy:role/cptest-plat-gbl-identity-gitops
+```    
+
+### Support OpenTofu
+
+This action supports [OpenTofu](https://opentofu.org/).
+
+> [!IMPORTANT]
+> **Please note!** OpenTofu supported by Atmos `>= 1.73.0`.
+> For details [read](https://atmos.tools/core-concepts/projects/configuration/opentofu/)
+
+To enable OpenTofu add the following settings to `atmos.yaml`
+  * Set the `opentofu-version` in the `atmos.yaml` to the desired version
+  * Set `components.terraform.command` to `tofu`
+
+#### Example
+
+```yaml
+
+components:
+  terraform:
+    command: tofu
+
+...
+
+integrations:
+  github:
+    gitops:
+      opentofu-version: 1.7.3
+      ...
+```  
 
 ### Workflow example
 
@@ -128,7 +219,17 @@ jobs:
           atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml    
 ```
 
+### Migrating from `v2` to `v3`
 
+The notable changes in `v3` are:
+
+- `v3` works only with `atmos >= 1.99.0`
+- `v3` use `cloudposse/github-action-atmos-terraform-apply@v3`
+- `v3` supports stack level integration gitops settings 
+- `v3` allow to skip internal checkout with `skip-checkout` input
+
+The only required migration step is updating atmos version to `>= 1.99.0`
+  
 ### Migrating from `v1` to `v2`
 
 The notable changes in `v2` are:
@@ -295,9 +396,10 @@ If you want the same behavior in `v1`  as in`v0` you should create config `./.gi
 |------|-------------|---------|----------|
 | action | Drift remediation action. One of ['remediate', 'discard'] | remediate | false |
 | atmos-config-path | The path to the atmos.yaml file | N/A | true |
-| atmos-version | The version of atmos to install | >= 1.63.0 | false |
+| atmos-version | The version of atmos to install | >= 1.99.0 | false |
 | debug | Enable action debug mode. Default: 'false' | false | false |
 | issue-number | Issue Number | N/A | true |
+| skip-checkout | Disable actions/checkout. Useful for when the checkout happens in a previous step and file are modified outside of git through other actions | false | false |
 | token | Used to pull node distributions for Atmos from Cloud Posse's GitHub repository. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting. | ${{ github.server\_url == 'https://github.com' && github.token \|\| '' }} | false |
 
 
