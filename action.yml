@@ -15,10 +15,14 @@ inputs:
   atmos-version:
     description: The version of atmos to install
     required: false
-    default: ">= 1.63.0"
+    default: ">= 1.99.0"
   atmos-config-path:
     description: The path to the atmos.yaml file
     required: true
+  skip-checkout:
+    description: "Disable actions/checkout. Useful for when the checkout happens in a previous step and file are modified outside of git through other actions"
+    required: false
+    default: 'false'    
   debug:
     description: "Enable action debug mode. Default: 'false'"
     default: 'false'
@@ -77,7 +81,7 @@ runs:
     - name: Atmos Apply
       if: env.ACTION == 'remediate'
       id: atmos-apply
-      uses: cloudposse/github-action-atmos-terraform-apply@v2
+      uses: cloudposse/github-action-atmos-terraform-apply@v3
       with:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
@@ -85,6 +89,7 @@ runs:
         atmos-config-path: ${{ inputs.atmos-config-path }}
         atmos-version: ${{ inputs.atmos-version }}
         debug: ${{ inputs.debug }}
+        skip-checkout: ${{ inputs.skip-checkout }}
 
     - name: Check If GitHub Actions is Enabled For Component
       shell: bash
