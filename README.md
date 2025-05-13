@@ -37,7 +37,7 @@ This Github Action is used to remediate drift
 >
 > <details>
 > <summary><strong>Watch demo of using Atmos with Terraform</strong></summary>
-> <img src="https://github.com/cloudposse/atmos/blob/master/docs/demo.gif?raw=true"/><br/>
+> <img src="https://github.com/cloudposse/atmos/blob/main/docs/demo.gif?raw=true"/><br/>
 > <i>Example of running <a href="https://atmos.tools"><code>atmos</code></a> to manage infrastructure from our <a href="https://atmos.tools/quick-start/">Quick Start</a> tutorial.</i>
 > </detalis>
 
@@ -56,7 +56,8 @@ There is another companion action [github-action-atmos-terraform-drift-detection
 ### Config
 
 > [!IMPORTANT]
-> **Please note!** This GitHub Action only works with `atmos >= 1.99.0`.
+> **Please note!** This GitHub Action only works with `atmos >= 1.158.0`.
+> If you are using `atmos >= 1.99.0, < 1.158.0` please use `v3` version of this action.   
 > If you are using `atmos >= 1.63.0, < 1.99.0` please use `v2` version of this action.  
 > If you are using `atmos < 1.63.0` please use `v1` version of this action.
 
@@ -218,6 +219,12 @@ jobs:
           action: discard
           atmos-gitops-config-path: ./.github/config/atmos-gitops.yaml    
 ```
+
+### Migrating from `v3` to `v4`
+
+The notable changes in `v4` are:
+- `v4` works only with `atmos >= 1.158.0`
+- `v4` supports atnos `templates` and `functions`
 
 ### Migrating from `v2` to `v3`
 
@@ -396,7 +403,7 @@ If you want the same behavior in `v1`  as in`v0` you should create config `./.gi
 |------|-------------|---------|----------|
 | action | Drift remediation action. One of ['remediate', 'discard'] | remediate | false |
 | atmos-config-path | The path to the atmos.yaml file | N/A | true |
-| atmos-version | The version of atmos to install | >= 1.99.0 | false |
+| atmos-version | The version of atmos to install | >= 1.158.0 | false |
 | debug | Enable action debug mode. Default: 'false' | false | false |
 | issue-number | Issue Number | N/A | true |
 | skip-checkout | Disable actions/checkout. Useful for when the checkout happens in a previous step and file are modified outside of git through other actions | false | false |
@@ -538,7 +545,7 @@ All other trademarks referenced herein are the property of their respective owne
 
 
 ---
-Copyright © 2017-2024 [Cloud Posse, LLC](https://cpco.io/copyright)
+Copyright © 2017-2025 [Cloud Posse, LLC](https://cpco.io/copyright)
 
 
 <a href="https://cloudposse.com/readme/footer/link?utm_source=github&utm_medium=readme&utm_campaign=cloudposse/github-action-atmos-terraform-drift-remediation&utm_content=readme_footer_link"><img alt="README footer" src="https://cloudposse.com/readme/footer/img"/></a>
