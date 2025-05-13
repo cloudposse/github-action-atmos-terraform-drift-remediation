@@ -15,7 +15,7 @@ inputs:
   atmos-version:
     description: The version of atmos to install
     required: false
-    default: ">= 1.99.0"
+    default: ">= 1.158.0"
   atmos-config-path:
     description: The path to the atmos.yaml file
     required: true
@@ -80,7 +80,7 @@ runs:
     - name: Atmos Apply
       if: env.ACTION == 'remediate'
       id: atmos-apply
-      uses: cloudposse/github-action-atmos-terraform-apply@v3
+      uses: cloudposse/github-action-atmos-terraform-apply@v4
       with:
         component: ${{ steps.metadata.outputs.component }}
         stack: ${{ steps.metadata.outputs.stack }}
