@@ -2,8 +2,11 @@
 
 <!-- markdownlint-disable -->
 <a href="https://cpco.io/homepage"><img src="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/blob/main/.github/banner.png?raw=true" alt="Project Banner"/></a><br/>
-    <p align="right">
-<a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/releases/latest"><img src="https://img.shields.io/github/release/cloudposse/github-action-atmos-terraform-drift-remediation.svg" alt="Latest Release"/></a><a href="https://slack.cloudposse.com"><img src="https://slack.cloudposse.com/badge.svg" alt="Slack Community"/></a></p>
+
+
+<p align="right"><a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/releases/latest"><img src="https://img.shields.io/github/release/cloudposse/github-action-atmos-terraform-drift-remediation.svg?style=for-the-badge" alt="Latest Release"/></a><a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/commits"><img src="https://img.shields.io/github/last-commit/cloudposse/github-action-atmos-terraform-drift-remediation.svg?style=for-the-badge" alt="Last Updated"/></a><a href="https://cloudposse.com/slack"><img src="https://slack.cloudposse.com/for-the-badge.svg" alt="Slack Community"/></a>
+
+</p>
 <!-- markdownlint-restore -->
 
 <!--
@@ -395,22 +398,10 @@ If you want the same behavior in `v1`  as in`v0` you should create config `./.gi
 
 
 
-<!-- markdownlint-disable -->
-
-## Inputs
-
-| Name | Description | Default | Required |
-|------|-------------|---------|----------|
-| action | Drift remediation action. One of ['remediate', 'discard'] | remediate | false |
-| atmos-config-path | The path to the atmos.yaml file | N/A | true |
-| atmos-version | The version of atmos to install | >= 1.158.0 | false |
-| debug | Enable action debug mode. Default: 'false' | false | false |
-| issue-number | Issue Number | N/A | true |
-| skip-checkout | Disable actions/checkout. Useful for when the checkout happens in a previous step and file are modified outside of git through other actions | false | false |
-| token | Used to pull node distributions for Atmos from Cloud Posse's GitHub repository. Since there's a default, this is typically not supplied by the user. When running this action on github.com, the default value is sufficient. When running on GHES, you can pass a personal access token for github.com if you are experiencing rate limiting. | ${{ github.server\_url == 'https://github.com' && github.token \|\| '' }} | false |
 
 
-<!-- markdownlint-restore -->
+
+
 
 
 ## Related Projects
