@@ -4,7 +4,7 @@
 <a href="https://cpco.io/homepage"><img src="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/blob/main/.github/banner.png?raw=true" alt="Project Banner"/></a><br/>
 
 
-<p align="right"><a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/releases/latest"><img src="https://img.shields.io/github/release/cloudposse/github-action-atmos-terraform-drift-remediation.svg?style=for-the-badge" alt="Latest Release"/></a><a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/commits"><img src="https://img.shields.io/github/last-commit/cloudposse/github-action-atmos-terraform-drift-remediation.svg?style=for-the-badge" alt="Last Updated"/></a><a href="https://cloudposse.com/slack"><img src="https://slack.cloudposse.com/for-the-badge.svg" alt="Slack Community"/></a>
+<p align="right"><a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/releases/latest"><img src="https://img.shields.io/github/release/cloudposse/github-action-atmos-terraform-drift-remediation.svg?style=for-the-badge" alt="Latest Release"/></a><a href="https://github.com/cloudposse/github-action-atmos-terraform-drift-remediation/commits"><img src="https://img.shields.io/github/last-commit/cloudposse/github-action-atmos-terraform-drift-remediation.svg?style=for-the-badge" alt="Last Updated"/></a><a href="https://cloudposse.com/slack"><img src="https://slack.cloudposse.com/for-the-badge.svg" alt="Slack Community"/></a><a href="https://cloudposse.com/support/"><img src="https://img.shields.io/badge/Get_Support-success.svg?style=for-the-badge" alt="Get Support"/></a>
 
 </p>
 <!-- markdownlint-restore -->
@@ -397,6 +397,32 @@ If you want the same behavior in `v1`  as in`v0` you should create config `./.gi
 
 
 
+
+<!-- markdownlint-disable -->
+## Requirements
+
+No requirements.
+
+## Providers
+
+No providers.
+
+## Modules
+
+No modules.
+
+## Resources
+
+No resources.
+
+## Inputs
+
+No inputs.
+
+## Outputs
+
+No outputs.
+<!-- markdownlint-restore -->
 
 
 
