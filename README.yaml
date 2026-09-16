@@ -31,6 +31,13 @@ related: []
 description: This Github Action is used to remediate drift
 
 introduction: |-
+  > [!WARNING]
+  > **Deprecated.** Migrate to [Atmos Native CI](https://atmos.tools/deprecated/github-actions/atmos-terraform-drift-remediation).
+
+  This action is deprecated in favor of Atmos Native CI. See the migration guide at
+  https://atmos.tools/deprecated/github-actions/atmos-terraform-drift-remediation for the equivalent
+  built-in command (`atmos terraform deploy`, triggered from an issue) and how to move your workflow over.
+
   This action is used for drift remediation.
 
   There is another companion action [github-action-atmos-terraform-drift-detection](https://github.com/cloudposse/github-action-atmos-terraform-drift-detection).
