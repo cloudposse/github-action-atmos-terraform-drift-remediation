@@ -34,7 +34,7 @@ This Github Action is used to remediate drift
 
 
 > [!WARNING]
-> **Deprecated.** Migrate to [Atmos Native CI](https://atmos.tools/deprecated/github-actions/atmos-terraform-drift-remediation).
+> **Deprecated.** Migrate to [Atmos Native CI](https://atmos.tools/ci).
 
 
 
